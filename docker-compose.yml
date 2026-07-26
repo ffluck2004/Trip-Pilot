@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: trippilot-db
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: trippilot
+      POSTGRES_USER: trippilot
+      POSTGRES_PASSWORD: trippilot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

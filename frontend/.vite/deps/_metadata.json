@@ -1,0 +1,40 @@
+{
+  "hash": "a1b2f9c4",
+  "configHash": "99caa8df",
+  "lockfileHash": "a7cd7fb8",
+  "browserHash": "2398dfbc",
+  "optimized": {
+    "leaflet": {
+      "src": "../../node_modules/leaflet/dist/leaflet-src.js",
+      "file": "leaflet.js",
+      "fileHash": "260858aa",
+      "needsInterop": true
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "74d75d8b",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "1b459d41",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "3476617c",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-CRLOJGAK": {
+      "file": "chunk-CRLOJGAK.js"
+    },
+    "chunk-G3PMV62Z": {
+      "file": "chunk-G3PMV62Z.js"
+    }
+  }
+}
