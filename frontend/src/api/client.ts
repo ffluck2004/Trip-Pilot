@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://trip-pilot-997a.onrender.com/api/v1';
 
 function getToken(): string | null {
   return localStorage.getItem('jwt_token');
