@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: trippilot-backend
+    runtime: java
+    plan: free
+    buildCommand: cd backend && mvn package -DskipTests -q
+    startCommand: cd backend && java -jar target/trippilot-backend-1.0.0.jar
+    envVars:
+      - key: JAVA_VERSION
+        value: "17"
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: trippilot-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: trippilot-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: trippilot-db
+          property: password
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: validate
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JWT_SECRET
+        value: trippilot-production-jwt-secret-change-me-in-production-64-bytes-minimum!!
+    healthCheckPath: /api/v1/auth/login
+
+databases:
+  - name: trippilot-db
+    plan: free
+    databaseName: trippilot
+    user: trippilot

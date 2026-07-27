@@ -1,16 +1,16 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5431/trippilot
-    username: trippilot
-    password: trippilot
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/trippilot}
+    username: ${SPRING_DATASOURCE_USERNAME:trippilot}
+    password: ${SPRING_DATASOURCE_PASSWORD:trippilot}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     show-sql: false
     properties:
       hibernate:
@@ -28,7 +28,7 @@ spring:
       write-dates-as-timestamps: false
 
 jwt:
-  secret: trippilot-super-secret-jwt-key-that-is-long-enough-for-hs512-algorithm-minimum-64-bytes!!
+  secret: ${JWT_SECRET:trippilot-super-secret-jwt-key-that-is-long-enough-for-hs512-algorithm-minimum-64-bytes!!}
   expiration-ms: 604800000
 
 gemini:
@@ -36,4 +36,4 @@ gemini:
 
 app:
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
