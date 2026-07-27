@@ -28,7 +28,7 @@ services:
         value: "*"
       - key: JWT_SECRET
         value: trippilot-production-jwt-secret-change-me-in-production-64-bytes-minimum!!
-    healthCheckPath: /api/v1/auth/login
+    healthCheckPath: /health
 
 databases:
   - name: trippilot-db
