@@ -1,10 +1,12 @@
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/TripPilotApplication.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/config/CorsConfig.java
+/Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/config/DatabaseUrlPostProcessor.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/config/SecurityConfig.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/AdminController.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/AuthController.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/ExpenseController.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/GeminiController.java
+/Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/HealthController.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/PlaceController.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/ReservationController.java
 /Users/s/Desktop/Trip-Pilot/backend/src/main/java/com/trippilot/controller/TripController.java
