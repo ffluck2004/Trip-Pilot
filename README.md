@@ -40,8 +40,7 @@ Users can register and log in with JWT-based authentication, search any destinat
 | | URL |
 |---|---|
 | 🌐 **Frontend** | <https://trip-pilot-delta.vercel.app> |
-| ⚙️ **Backend API** | <https://trip-pilot-ogsq.onrender.com/api/v1> |
-| 💚 **Health Check** | <https://trip-pilot-ogsq.onrender.com/health> |
+
 
 > **Demo credentials** — register a free account, or use the seeded guest account to explore instantly.
 
@@ -64,26 +63,7 @@ Users can register and log in with JWT-based authentication, search any destinat
 | 📱 **Responsive Design** | Seamless experience across mobile, tablet & desktop |
 | 🎨 **Modern UI** | Polished, high-contrast interface with smooth animations |
 
----
 
-## 📸 Screenshots
-
-<div align="center">
-
-| | |
-|:---:|:---:|
-| **🏠 Home Page** | **🔑 Login** |
-| ![Home Page](docs/screenshots/home.png) | ![Login](docs/screenshots/login.png) |
-| **📊 Dashboard** | **🗓️ Trip Planner** |
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Trip Planner](docs/screenshots/trip-planner.png) |
-| **🗺️ Interactive Map** | **📜 Generated Itinerary** |
-| ![Map](docs/screenshots/map.png) | ![Generated Itinerary](docs/screenshots/itinerary.png) |
-| **👤 Profile** | |
-| ![Profile](docs/screenshots/profile.png) | |
-
-</div>
-
-> 📷 Add your screenshots to `docs/screenshots/` and drop them in place.
 
 ---
 
