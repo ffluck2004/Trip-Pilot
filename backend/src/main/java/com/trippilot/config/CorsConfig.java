@@ -18,12 +18,16 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        boolean wildcard = false;
         for (String origin : allowedOrigins.split(",")) {
+            if (origin.trim().equals("*")) {
+                wildcard = true;
+            }
             config.addAllowedOrigin(origin.trim());
         }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(!wildcard);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
