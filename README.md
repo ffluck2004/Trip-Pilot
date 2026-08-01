@@ -39,7 +39,7 @@ Users can register and log in with JWT-based authentication, search any destinat
 
 | | URL |
 |---|---|
-| 🌐 **Frontend** | <https://trip-pilot-delta.vercel.app> |
+| 🌐 **Frontend** | <http://trip-pilot-git-main-ffluck2004s-projects.vercel.app/> |
 
 
 > **Demo credentials** — register a free account, or use the seeded guest account to explore instantly.
