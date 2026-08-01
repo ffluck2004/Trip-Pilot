@@ -123,6 +123,11 @@ export default function AiAssistant({ activeTrip }: AiAssistantProps) {
 
   const handleLaunchTrip = async (proposed: any, msgId: string) => {
     setLaunchingId(msgId);
+    const interests = Array.isArray(proposed.interests)
+      ? proposed.interests
+      : proposed.interests
+        ? String(proposed.interests).split(",").map((s: string) => s.trim()).filter(Boolean)
+        : [];
     try {
       const data = await generateTrip({
           userId: activeTrip?.userId || "guest-id",
@@ -132,7 +137,7 @@ export default function AiAssistant({ activeTrip }: AiAssistantProps) {
           budget: proposed.budget,
           peopleCount: proposed.peopleCount,
           travelRadiusKm: proposed.travelRadiusKm || 25,
-          interests: proposed.interests && proposed.interests.length > 0 ? proposed.interests : ["Food", "Sightseeing"],
+          interests: interests.length > 0 ? interests : ["Food", "Sightseeing"],
           travelStyle: proposed.travelStyle || "Adventure",
           preferences: proposed.preferences || "Generated via Conversational Assistant",
         });
@@ -257,9 +262,14 @@ export default function AiAssistant({ activeTrip }: AiAssistantProps) {
                       <p>📅 Duration: {m.proposedTrip.durationInDays} Days ({m.proposedTrip.durationInHours || 8}h Active)</p>
                       <p>💰 Budget: ₹{m.proposedTrip.budget}</p>
                       <p>👥 Group size: {m.proposedTrip.peopleCount} {m.proposedTrip.peopleCount > 1 ? "People" : "Person"}</p>
-                      {m.proposedTrip.interests && m.proposedTrip.interests.length > 0 && (
-                        <p className="text-[10px] text-slate-500 italic truncate">⭐ {m.proposedTrip.interests.join(", ")}</p>
-                      )}
+                      {m.proposedTrip.interests && (() => {
+                        const arr = Array.isArray(m.proposedTrip.interests)
+                          ? m.proposedTrip.interests
+                          : String(m.proposedTrip.interests).split(",").map((s) => s.trim()).filter(Boolean);
+                        return arr.length > 0 ? (
+                          <p className="text-[10px] text-slate-500 italic truncate">⭐ {arr.join(", ")}</p>
+                        ) : null;
+                      })()}
                     </div>
 
                     <button

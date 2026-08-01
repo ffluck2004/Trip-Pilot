@@ -9,15 +9,8 @@ import AdminPanel from "./components/AdminPanel";
 import AiAssistant from "./components/AiAssistant";
 
 export default function App() {
-  // Authenticated user state initialized from local storage
-  const [user, setUser] = useState<any>(() => {
-    try {
-      const saved = localStorage.getItem("trippilot_user");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  // Authenticated user state — start signed out so visitors always see the login page
+  const [user, setUser] = useState<any>(null);
 
   // Track active trip for the floating AI assistant context
   const [activeTrip, setActiveTrip] = useState<Trip | null>(null);

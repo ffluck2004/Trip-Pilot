@@ -26,9 +26,9 @@ export default function Onboarding({ onSuccess }: OnboardingProps) {
   const [isLogin, setIsLogin] = useState(true);
   
   // Auth Form State
-  const [email, setEmail] = useState("guest@trippilot.com");
-  const [password, setPassword] = useState("guest");
-  const [name, setName] = useState("Amelia Earhart");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -181,7 +181,7 @@ export default function Onboarding({ onSuccess }: OnboardingProps) {
                 className="w-full bg-[#F5F5F0] hover:bg-[#E5E5DF] text-[#1A1A1A] border border-[#1A1A1A] font-bold uppercase tracking-widest text-[10px] py-3.5 px-4 rounded-none transition duration-200 flex items-center justify-center gap-1.5"
               >
                 <UserCheck className="w-4 h-4 text-[#F27D26]" />
-                Quick Guest Entrance ( Amelia )
+                Quick Guest Entrance
               </button>
             </div>
 

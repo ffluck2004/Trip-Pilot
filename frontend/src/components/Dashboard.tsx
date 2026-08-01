@@ -58,14 +58,14 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
   
   // Smart Itinerary Input forms
   const [destination, setDestination] = useState("");
-  const [durationDays, setDurationDays] = useState(3);
-  const [durationHours, setDurationHours] = useState(8);
-  const [budgetVal, setBudgetVal] = useState(20000);
-  const [peopleCount, setPeopleCount] = useState(5);
-  const [travelRadius, setTravelRadius] = useState(25); // KM
-  const [travelStyle, setTravelStyle] = useState("Family");
-  const [interestsList, setInterestsList] = useState<string[]>(["Heritage", "Shopping", "Food"]);
-  const [customBrief, setCustomBrief] = useState("Family trip of 5 trying to balance iconic attractions with local food and culture.");
+  const [durationDays, setDurationDays] = useState<number | "">("");
+  const [durationHours, setDurationHours] = useState<number | "">("");
+  const [budgetVal, setBudgetVal] = useState<number | "">("");
+  const [peopleCount, setPeopleCount] = useState<number | "">("");
+  const [travelRadius, setTravelRadius] = useState<number | "">("");
+  const [travelStyle, setTravelStyle] = useState("");
+  const [interestsList, setInterestsList] = useState<string[]>([]);
+  const [customBrief, setCustomBrief] = useState("");
   
   const [generating, setGenerating] = useState(false);
   const [aiSucceeded, setAiSucceeded] = useState(false);
@@ -290,9 +290,6 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
       if (data.length > 0) {
         const liveOrNewest = data.find((t: Trip) => t.status === "live") || data[0];
         setActiveTrip(liveOrNewest);
-        if (liveOrNewest.input?.destination) {
-          setDestination(liveOrNewest.input.destination);
-        }
         if (onTripChange) onTripChange(liveOrNewest);
         
         // Fetch associated details
@@ -435,7 +432,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
   // Triggers server trip planner (invoking server-side Gemini 3.5 API)
   const handleGenerateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!destination || durationDays <= 0) return;
+    if (!destination || !durationDays || !durationHours || !budgetVal || !peopleCount) return;
 
     setGenerating(true);
     setAiFeedbackMsg("");
@@ -445,14 +442,14 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
       const data = await generateTrip({
         userId: user.id,
         destination,
-        durationInDays: durationDays,
-        durationInHours: durationHours,
-        budget: budgetVal,
-        peopleCount: peopleCount,
-        travelRadiusKm: travelRadius,
+        durationInDays: Number(durationDays),
+        durationInHours: Number(durationHours),
+        budget: Number(budgetVal),
+        peopleCount: Number(peopleCount),
+        travelRadiusKm: travelRadius === "" ? undefined : Number(travelRadius),
         interests: interestsList,
-        travelStyle,
-        preferences: customBrief,
+        travelStyle: travelStyle || undefined,
+        preferences: customBrief || undefined,
       });
 
       setTrips(prev => [data.trip, ...prev]);
@@ -855,7 +852,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                         min="1"
                         max="30"
                         value={durationDays}
-                        onChange={(e) => setDurationDays(parseInt(e.target.value) || 1)}
+                        onChange={(e) => setDurationDays(e.target.value === "" ? "" : (parseInt(e.target.value) || 1))}
                         className="w-full bg-[#FBFBF9] rounded-none border border-[#1A1A1A]/15 py-2.5 px-3 text-xs outline-none focus:border-[#1A1A1A] transition"
                       />
                       <span className="text-[10px] text-[#1A1A1A]/60 self-center font-bold uppercase tracking-wider font-mono">Days</span>
@@ -871,7 +868,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                         min="1"
                         max="24"
                         value={durationHours}
-                        onChange={(e) => setDurationHours(parseInt(e.target.value) || 8)}
+                        onChange={(e) => setDurationHours(e.target.value === "" ? "" : (parseInt(e.target.value) || 8))}
                         className="w-full bg-[#FBFBF9] rounded-none border border-[#1A1A1A]/15 py-2.5 px-3 text-xs outline-none focus:border-[#1A1A1A] transition"
                       />
                       <span className="text-[10px] text-[#1A1A1A]/60 self-center font-bold uppercase tracking-wider font-mono">Hours</span>
@@ -886,6 +883,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                       onChange={(e) => setTravelStyle(e.target.value)}
                       className="w-full bg-[#FBFBF9] rounded-none border border-[#1A1A1A]/15 py-2.5 px-3 text-xs outline-none focus:border-[#1A1A1A] transition"
                     >
+                      <option value="" disabled>Select travel style</option>
                       <option value="Budget">Budget Explorer</option>
                       <option value="Luxury">Luxury & Comfort</option>
                       <option value="Family">Friendly Family Tour</option>
@@ -903,7 +901,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                       type="number"
                       step="500"
                       value={budgetVal}
-                      onChange={(e) => setBudgetVal(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => setBudgetVal(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))}
                       className="w-full bg-[#FBFBF9] rounded-none border border-[#1A1A1A]/15 py-2.5 px-3 text-xs outline-none focus:border-[#1A1A1A] transition"
                     />
                   </div>
@@ -915,7 +913,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                       type="number"
                       min="1"
                       value={peopleCount}
-                      onChange={(e) => setPeopleCount(parseInt(e.target.value) || 1)}
+                      onChange={(e) => setPeopleCount(e.target.value === "" ? "" : (parseInt(e.target.value) || 1))}
                       className="w-full bg-[#FBFBF9] rounded-none border border-[#1A1A1A]/15 py-2.5 px-3 text-xs outline-none focus:border-[#1A1A1A] transition"
                     />
                   </div>
@@ -925,9 +923,10 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                     <label className="block text-[10px] font-mono font-bold text-[#1A1A1A]/60 uppercase tracking-wider mb-1">Max Travel Radius (KM)</label>
                     <select
                       value={travelRadius}
-                      onChange={(e) => setTravelRadius(parseInt(e.target.value))}
+                      onChange={(e) => setTravelRadius(e.target.value === "" ? "" : parseInt(e.target.value))}
                       className="w-full bg-[#FBFBF9] rounded-none border border-[#1A1A1A]/15 py-2.5 px-3 text-xs outline-none focus:border-[#1A1A1A] transition"
                     >
+                      <option value="" disabled>Select max radius</option>
                       <option value={3}>Strict Urban (3 KM)</option>
                       <option value={5}>Transit Short (5 KM)</option>
                       <option value={10}>Mid Distance (10 KM)</option>

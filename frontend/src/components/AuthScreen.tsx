@@ -10,9 +10,9 @@ interface AuthScreenProps {
 
 export default function AuthScreen({ onSuccess, onBypass }: AuthScreenProps) {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("guest@trippilot.com");
-  const [password, setPassword] = useState("guest");
-  const [name, setName] = useState("Amelia Earhart");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
