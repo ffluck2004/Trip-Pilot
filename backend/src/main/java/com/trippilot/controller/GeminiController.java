@@ -81,14 +81,27 @@ public class GeminiController {
         else if (msg.contains("weekend")) days = 2;
         trip.put("durationInDays", days);
 
-        // Parse budget like "20000", "₹50,000", "20k", "1 lakh" (default 15000)
+        // Parse budget like "20000", "₹50,000", "budget of 20000", "20k", "1 lakh" (default 15000)
         long budget = 15000;
-        java.util.regex.Matcher budMatch = java.util.regex.Pattern.compile("(?:budget of\\s*)?[₹]?\\s*(\\d+)\\s*(k|k rs|lakh|inr|rs)?").matcher(msg);
+        String lowerMsg = msg.toLowerCase();
+        long raw = -1;
+        String unit = null;
+        java.util.regex.Matcher budMatch = java.util.regex.Pattern.compile("(?:budget\\s*(?:of\\s*)?|₹|inr\\s*|rs\\s*)(\\d+(?:[.,]\\d+)?)").matcher(lowerMsg);
         if (budMatch.find()) {
-            long raw = Long.parseLong(budMatch.group(1));
-            String unit = budMatch.group(2);
-            if (unit != null && unit.toLowerCase().startsWith("k")) raw *= 1000;
-            if (unit != null && unit.toLowerCase().startsWith("lakh")) raw *= 100000;
+            raw = Long.parseLong(budMatch.group(1).replaceAll("[.,]", ""));
+        } else {
+            java.util.regex.Matcher shortMatch = java.util.regex.Pattern.compile("(\\d+)\\s*(k|lakh)").matcher(lowerMsg);
+            if (shortMatch.find()) {
+                raw = Long.parseLong(shortMatch.group(1));
+                unit = shortMatch.group(2);
+            } else {
+                java.util.regex.Matcher plainMatch = java.util.regex.Pattern.compile("(\\d{4,7})").matcher(lowerMsg);
+                if (plainMatch.find()) raw = Long.parseLong(plainMatch.group(1));
+            }
+        }
+        if (raw > 0) {
+            if (unit != null && unit.startsWith("k")) raw *= 1000;
+            if (unit != null && unit.startsWith("lakh")) raw *= 100000;
             budget = Math.max(2000, Math.min(2000000, raw));
         }
         trip.put("budget", budget);

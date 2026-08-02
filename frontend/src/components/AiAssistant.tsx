@@ -102,11 +102,14 @@ export default function AiAssistant({ activeTrip, userId }: AiAssistantProps) {
       const hit = DESTINATIONS.find(([key]) => lower.includes(key));
       if (hit || /plan|trip|travel|go to|visit|vacation|holiday/.test(lower)) {
         const daysMatch = lower.match(/(\d+)\s*(?:-?\s*)?(?:days?|day)/);
-        const budgetMatch = lower.match(/[₹]?\s*(\d+)\s*(k|lakh|rs)?/);
         let budget = 18000;
-        if (budgetMatch) {
-          let raw = parseInt(budgetMatch[1], 10);
-          const unit = (budgetMatch[2] || "").toLowerCase();
+        const explicitBudget = lower.match(/(?:budget\s*(?:of\s*)?|₹|inr\s*|rs\s*)(\d+(?:[.,]?\d+)*)/);
+        const shortBudget = lower.match(/(\d+)\s*(k|lakh)/);
+        const plainBudget = lower.match(/(\d{4,7})/);
+        const budSrc = explicitBudget || shortBudget || plainBudget;
+        if (budSrc) {
+          let raw = parseInt(budSrc[1].replace(/[.,]/g, ""), 10);
+          const unit = (budSrc[2] || "").toLowerCase();
           if (unit.startsWith("k")) raw *= 1000;
           if (unit.startsWith("lakh")) raw *= 100000;
           budget = Math.max(2000, Math.min(2000000, raw));
