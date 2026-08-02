@@ -133,7 +133,7 @@ export default function App() {
       </main>
 
       {/* Floating Smart AI assistant (always available at the bottom-right for conversation) */}
-      <AiAssistant activeTrip={activeTrip} />
+      <AiAssistant activeTrip={activeTrip} userId={user.id} />
 
     </div>
   );

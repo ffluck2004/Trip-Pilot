@@ -124,7 +124,7 @@ public class TripService {
             clauses.add(new OverpassClause("shop", "beauty|hairdresser|cosmetics"));
             clauses.add(new OverpassClause("amenity", "spa|beauty"));
         }
-        if (lower.contains("fun activity") || lower.contains("arcade") || lower.contains("game zone") || lower.contains("game")) {
+        if (lower.contains("fun activity") || lower.contains("fun activit") || lower.contains("arcade") || lower.contains("game zone") || lower.contains("game")) {
             clauses.add(new OverpassClause("leisure", "amusement_arcade|video_arcade|bowling_alley|escape_game|water_park"));
             clauses.add(new OverpassClause("leisure", "amusement_ride|summer_camp|game_centre"));
         }
@@ -166,10 +166,24 @@ public class TripService {
         List<Map<String, Object>> itinerary = new ArrayList<>();
         boolean usedAI = false;
 
-        // Try curated landmarks first for known destinations (instant, no API calls)
-        itinerary = getCuratedSpots(req);
+        // 1. Fetch real interest-based POIs from Overpass FIRST so selected
+        //    interests always drive the itinerary (covers all destinations).
+        try {
+            Map<String, Object> geo = geocodeDestination(req.getDestination());
+            double lat = (double) geo.get("lat");
+            double lng = (double) geo.get("lng");
+            int requested = Math.max(req.getDurationInDays() * 6, 24);
+            itinerary = fetchOverpassPlacesByInterests(lat, lng, req.getTravelRadiusKm(), req.getInterests(), requested);
+        } catch (Exception e) {
+            System.err.println("Overpass failed, using fallback: " + e.getMessage());
+        }
 
-        // Try Gemini AI (only if API key is available and curated didn't cover it)
+        // 2. Curated landmarks for known destinations (instant, no API calls)
+        if (itinerary.isEmpty()) {
+            itinerary = getCuratedSpots(req);
+        }
+
+        // 3. Try Gemini AI (only if API key is available and above didn't cover it)
         if (itinerary.isEmpty() && geminiService.isAvailable()) {
             try {
                 String prompt = buildGeminiPrompt(req);
@@ -189,20 +203,7 @@ public class TripService {
             }
         }
 
-        // Fetch from Overpass with interest-based queries (parallel)
-        if (itinerary.isEmpty()) {
-            try {
-                Map<String, Object> geo = geocodeDestination(req.getDestination());
-                double lat = (double) geo.get("lat");
-                double lng = (double) geo.get("lng");
-                int requested = Math.max(req.getDurationInDays() * 6, 24);
-                itinerary = fetchOverpassPlacesByInterests(lat, lng, req.getTravelRadiusKm(), req.getInterests(), requested);
-            } catch (Exception e) {
-                System.err.println("Overpass failed, using fallback: " + e.getMessage());
-            }
-        }
-
-        // Final fallback with generic interest-based spots
+        // 4. Final fallback with generic interest-based spots
         if (itinerary.isEmpty()) {
             itinerary = generateInterestSpots(req);
         }

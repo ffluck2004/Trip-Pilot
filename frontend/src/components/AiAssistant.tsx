@@ -11,6 +11,7 @@ import { generateTrip } from '../api/tripApi';
 
 interface AiAssistantProps {
   activeTrip: Trip | null;
+  userId?: string;
 }
 
 interface ChatMessage {
@@ -31,7 +32,7 @@ interface ChatMessage {
   } | null;
 }
 
-export default function AiAssistant({ activeTrip }: AiAssistantProps) {
+export default function AiAssistant({ activeTrip, userId }: AiAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputVal, setInputVal] = useState("");
@@ -92,17 +93,49 @@ export default function AiAssistant({ activeTrip }: AiAssistantProps) {
       // Fallback proposal detection based on user query
       const lower = userText.toLowerCase();
       let proposedTrip = null;
-      if (lower.includes("jaipur") || lower.includes("mumbai") || lower.includes("delhi") || lower.includes("goa") || lower.includes("paris") || lower.includes("plan") || lower.includes("trip")) {
+      const DESTINATIONS: [string, string][] = [
+        ["mumbai", "Mumbai"], ["delhi", "Delhi"], ["jaipur", "Jaipur"], ["goa", "Goa"],
+        ["varanasi", "Varanasi"], ["manali", "Manali"], ["agra", "Agra"], ["kerala", "Kerala"],
+        ["paris", "Paris"], ["london", "London"], ["tokyo", "Tokyo"], ["bangkok", "Bangkok"],
+        ["thailand", "Thailand"], ["bali", "Bali"], ["singapore", "Singapore"], ["dubai", "Dubai"],
+      ];
+      const hit = DESTINATIONS.find(([key]) => lower.includes(key));
+      if (hit || /plan|trip|travel|go to|visit|vacation|holiday/.test(lower)) {
+        const daysMatch = lower.match(/(\d+)\s*(?:-?\s*)?(?:days?|day)/);
+        const budgetMatch = lower.match(/[₹]?\s*(\d+)\s*(k|lakh|rs)?/);
+        let budget = 18000;
+        if (budgetMatch) {
+          let raw = parseInt(budgetMatch[1], 10);
+          const unit = (budgetMatch[2] || "").toLowerCase();
+          if (unit.startsWith("k")) raw *= 1000;
+          if (unit.startsWith("lakh")) raw *= 100000;
+          budget = Math.max(2000, Math.min(2000000, raw));
+        }
+        const interests: string[] = [];
+        if (/(food|restaurant|dhaba)/.test(lower)) interests.push("Food");
+        if (/beach/.test(lower)) interests.push("Beach");
+        if (/(shopping|mall)/.test(lower)) interests.push("Shopping");
+        if (/(temple|heritage|culture|history)/.test(lower)) interests.push("Heritage");
+        if (/(nightlife|party|club)/.test(lower)) interests.push("Nightlife");
+        if (/(nature|trek|hike|mountain)/.test(lower)) interests.push("Nature");
+        if (/(photography|photo)/.test(lower)) interests.push("Photography");
+        if (interests.length === 0) interests.push("Sightseeing");
+        let style = "Adventure";
+        if (/luxury|5 star/.test(lower)) style = "Luxury";
+        else if (/budget|cheap|affordable/.test(lower)) style = "Budget";
+        else if (/family|kids/.test(lower)) style = "Family";
+        else if (/solo/.test(lower)) style = "Solo";
+
         proposedTrip = {
-          destination: lower.includes("jaipur") ? "Jaipur" : lower.includes("paris") ? "Paris" : lower.includes("goa") ? "Goa" : "Mumbai",
-          durationInDays: 3,
+          destination: hit ? hit[1] : "Mumbai",
+          durationInDays: daysMatch ? Math.min(30, Math.max(1, parseInt(daysMatch[1], 10))) : 3,
           durationInHours: 8,
-          budget: 18000,
+          budget,
           peopleCount: 2,
           travelRadiusKm: 20,
-          interests: ["Food", "Sightseeing", "Photography"],
-          travelStyle: "Adventure",
-          preferences: `Spontaneous chat request about: ${userText}`
+          interests,
+          travelStyle: style,
+          preferences: `Spontaneous chat request about: ${userText}`,
         };
       }
 
@@ -130,7 +163,7 @@ export default function AiAssistant({ activeTrip }: AiAssistantProps) {
         : [];
     try {
       const data = await generateTrip({
-          userId: activeTrip?.userId || "guest-id",
+          userId: userId || activeTrip?.userId || "guest-id",
           destination: proposed.destination,
           durationInDays: proposed.durationInDays,
           durationInHours: proposed.durationInHours || 8,
@@ -212,7 +245,7 @@ export default function AiAssistant({ activeTrip }: AiAssistantProps) {
                 <h3 className="font-serif italic font-bold text-sm text-[#FBFBF9] tracking-wider">TripPilot Intelligence</h3>
                 <p className="text-[9px] font-mono text-[#FBFBF9]/65 flex items-center gap-1.5 mt-0.5 uppercase tracking-wide">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#F27D26] animate-pulse"></span>
-                  Gemini Active
+                  Pilot Online
                 </p>
               </div>
             </div>

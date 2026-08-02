@@ -285,18 +285,19 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
   // Fetch active trips and reservations
   const fetchTripsAndReservations = async () => {
     try {
-      const data = await getTripsByUser(user.id);
-      setTrips(data);
-      if (data.length > 0) {
-        const liveOrNewest = data.find((t: Trip) => t.status === "live") || data[0];
+      const [tripsData, resData] = await Promise.all([
+        getTripsByUser(user.id),
+        getReservationsByUser(user.id),
+      ]);
+      setTrips(tripsData);
+      if (tripsData.length > 0) {
+        const liveOrNewest = tripsData.find((t: Trip) => t.status === "live") || tripsData[0];
         setActiveTrip(liveOrNewest);
         if (onTripChange) onTripChange(liveOrNewest);
         
         // Fetch associated details
         fetchTripDetails(liveOrNewest.id);
       }
-
-      const resData = await getReservationsByUser(user.id);
       setUserReservations(resData);
     } catch (e: any) {
       console.error(e);

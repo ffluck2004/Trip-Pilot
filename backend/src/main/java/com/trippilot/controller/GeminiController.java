@@ -64,20 +64,58 @@ public class GeminiController {
     }
 
     private Map<String, Object> detectTripFromMessage(String msg) {
-        String[] destinations = {"mumbai", "delhi", "jaipur", "goa", "varanasi", "manali", "london", "paris", "thane", "nagpur", "bhopal", "lucknow"};
-        for (String dest : destinations) {
-            if (msg.contains(dest)) {
-                Map<String, Object> trip = new LinkedHashMap<>();
-                trip.put("destination", dest.substring(0, 1).toUpperCase() + dest.substring(1));
-                trip.put("durationInDays", 3);
-                trip.put("budget", 15000);
-                trip.put("peopleCount", 2);
-                trip.put("travelRadiusKm", 25);
-                trip.put("interests", "Food, Sightseeing");
-                trip.put("travelStyle", "Balanced");
-                return trip;
-            }
+        String[] destinations = {"mumbai", "delhi", "jaipur", "goa", "varanasi", "manali", "shimla", "agra", "udaipur", "kerala", "kochi", "ladakh", "kashmir", "thane", "nagpur", "bhopal", "lucknow", "london", "paris", "tokyo", "bangkok", "thailand", "bali", "singapore", "dubai", "amsterdam", "switzerland", "new york", "rome"};
+        String dest = null;
+        for (String d : destinations) {
+            if (msg.contains(d)) { dest = d; break; }
         }
-        return null;
+        if (dest == null) return null;
+
+        Map<String, Object> trip = new LinkedHashMap<>();
+        trip.put("destination", dest.substring(0, 1).toUpperCase() + dest.substring(1));
+
+        // Parse duration like "3 days" / "5-day" / "weekend" (default 3)
+        int days = 3;
+        java.util.regex.Matcher dayMatch = java.util.regex.Pattern.compile("(\\d+)\\s*(?:-?\\s*)?(?:days?|day)").matcher(msg);
+        if (dayMatch.find()) days = Math.min(30, Math.max(1, Integer.parseInt(dayMatch.group(1))));
+        else if (msg.contains("weekend")) days = 2;
+        trip.put("durationInDays", days);
+
+        // Parse budget like "20000", "₹50,000", "20k", "1 lakh" (default 15000)
+        long budget = 15000;
+        java.util.regex.Matcher budMatch = java.util.regex.Pattern.compile("(?:budget of\\s*)?[₹]?\\s*(\\d+)\\s*(k|k rs|lakh|inr|rs)?").matcher(msg);
+        if (budMatch.find()) {
+            long raw = Long.parseLong(budMatch.group(1));
+            String unit = budMatch.group(2);
+            if (unit != null && unit.toLowerCase().startsWith("k")) raw *= 1000;
+            if (unit != null && unit.toLowerCase().startsWith("lakh")) raw *= 100000;
+            budget = Math.max(2000, Math.min(2000000, raw));
+        }
+        trip.put("budget", budget);
+        trip.put("peopleCount", 2);
+        trip.put("travelRadiusKm", 25);
+
+        // Extract interests from message keywords
+        java.util.List<String> interests = new java.util.ArrayList<>();
+        if (msg.contains("food") || msg.contains("restaurant") || msg.contains("dhaba")) interests.add("Food");
+        if (msg.contains("beach")) interests.add("Beach");
+        if (msg.contains("shopping") || msg.contains("mall")) interests.add("Shopping");
+        if (msg.contains("temple") || msg.contains("heritage") || msg.contains("culture") || msg.contains("history")) interests.add("Heritage");
+        if (msg.contains("nightlife") || msg.contains("party") || msg.contains("club")) interests.add("Nightlife");
+        if (msg.contains("nature") || msg.contains("trek") || msg.contains("hike") || msg.contains("mountain")) interests.add("Nature");
+        if (msg.contains("photography") || msg.contains("photo")) interests.add("Photography");
+        if (interests.isEmpty()) interests.add("Sightseeing");
+        trip.put("interests", interests);
+
+        // Travel style from message keywords
+        String style = "Balanced";
+        if (msg.contains("luxury") || msg.contains("5 star")) style = "Luxury";
+        else if (msg.contains("budget") || msg.contains("cheap") || msg.contains("affordable")) style = "Budget";
+        else if (msg.contains("adventure") || msg.contains("trek") || msg.contains("hike")) style = "Adventure";
+        else if (msg.contains("family") || msg.contains("kids")) style = "Family";
+        else if (msg.contains("solo")) style = "Solo";
+        trip.put("travelStyle", style);
+        trip.put("preferences", "Spontaneous request: " + msg);
+        return trip;
     }
 }

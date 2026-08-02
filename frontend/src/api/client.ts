@@ -14,7 +14,8 @@ export function clearToken() {
 
 export async function apiRequest<T = any>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  timeoutMs: number = 30000
 ): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -25,25 +26,37 @@ export async function apiRequest<T = any>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({ message: res.statusText }));
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({ message: res.statusText }));
 
-    // If unauthorized or forbidden, session is stale — force re-auth
-    if (res.status === 401 || res.status === 403) {
-      clearToken();
-      localStorage.removeItem("trippilot_user");
-      localStorage.removeItem("temp_user");
-      window.location.reload();
-      throw new Error("Session expired. Please log in again.");
+      // If unauthorized or forbidden, session is stale — force re-auth
+      if (res.status === 401 || res.status === 403) {
+        clearToken();
+        localStorage.removeItem("trippilot_user");
+        localStorage.removeItem("temp_user");
+        window.location.reload();
+        throw new Error("Session expired. Please log in again.");
+      }
+
+      throw new Error(errorBody.message || errorBody.error || `Request failed: ${res.status}`);
     }
 
-    throw new Error(errorBody.message || errorBody.error || `Request failed: ${res.status}`);
+    return res.json();
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return res.json();
 }
