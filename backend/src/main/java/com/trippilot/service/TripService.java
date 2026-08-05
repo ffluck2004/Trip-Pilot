@@ -919,6 +919,8 @@ public class TripService {
             spots.add(Map.<String, Object>of("title", cap + " Coffee House & Bookstore", "category", "restaurant", "cost", 150, "desc", "Cozy independent coffee house with a curated bookstore and quiet reading corners.", "addr", "Library Lane, " + cap, "lat", baseLat - 0.003, "lng", baseLng + 0.005, "estimatedDurationMinutes", 45));
             spots.add(Map.<String, Object>of("title", cap + " Riverside Walk & Bridge", "category", "hidden_gem", "cost", 0, "desc", "Peaceful riverside walkway with a historic bridge and scenic water views.", "addr", "Riverside, " + cap, "lat", baseLat + 0.002, "lng", baseLng - 0.006, "estimatedDurationMinutes", 60));
         }
+
+        java.util.Collections.shuffle(spots);
         return spots;
     }
 
