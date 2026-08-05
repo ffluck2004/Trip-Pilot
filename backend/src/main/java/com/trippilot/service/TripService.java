@@ -348,6 +348,7 @@ public class TripService {
     private List<Map<String, Object>> fetchOverpassPlacesByInterests(double lat, double lng, BigDecimal radiusKm, String interests, int count) {
         List<OverpassClause> clauses = getOverpassClausesForInterests(interests);
         double delta = radiusKm != null ? radiusKm.doubleValue() / 111.0 : 0.1;
+        if (delta < 0.05) delta = 0.05;
         String bbox = (lat - delta) + "," + (lng - delta) + "," + (lat + delta) + "," + (lng + delta);
 
         StringBuilder query = new StringBuilder("[out:json][timeout:10];(");
@@ -364,31 +365,47 @@ public class TripService {
             return cached.value().stream().limit(count).toList();
         }
 
-        try {
-            String encoded = "data=" + URLEncoder.encode(query.toString(), StandardCharsets.UTF_8);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://overpass-api.de/api/interpreter"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString(encoded))
-                    .timeout(Duration.ofSeconds(12))
-                    .build();
+        List<String> servers = List.of(
+            "https://overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter",
+            "https://overpass.private.coffee/api/interpreter"
+        );
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            String body = response.body();
-            if (body == null || body.isBlank() || body.trim().startsWith("<")) {
-                System.err.println("Overpass returned non-JSON response (likely rate limited)");
-                return List.of();
+        for (String server : servers) {
+            try {
+                String encoded = "data=" + URLEncoder.encode(query.toString(), StandardCharsets.UTF_8);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(server))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString(encoded))
+                        .timeout(Duration.ofSeconds(12))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() != 200) {
+                    System.err.println("Overpass mirror " + server + " returned HTTP " + response.statusCode() + ", trying next mirror");
+                    continue;
+                }
+                String body = response.body();
+                if (body == null || body.isBlank() || body.trim().startsWith("<")) {
+                    System.err.println("Overpass mirror " + server + " returned non-JSON (likely rate limited), trying next mirror");
+                    continue;
+                }
+                JsonNode data = mapper.readTree(body);
+                if (data.has("remark")) {
+                    System.err.println("Overpass mirror " + server + " returned runtime error: " + data.get("remark").asText());
+                    continue;
+                }
+                List<Map<String, Object>> results = parseOverpassResponse(data);
+                if (!results.isEmpty()) {
+                    geoCache.put(cacheKey, new CacheEntry<>(results, System.currentTimeMillis()));
+                    return results.stream().limit(count).toList();
+                }
+            } catch (Exception e) {
+                System.err.println("Overpass API error (" + server + "): " + e.getMessage());
             }
-            JsonNode data = mapper.readTree(body);
-            List<Map<String, Object>> results = parseOverpassResponse(data);
-
-            geoCache.put(cacheKey, new CacheEntry<>(results, System.currentTimeMillis()));
-
-            return results.stream().limit(count).toList();
-        } catch (Exception e) {
-            System.err.println("Overpass API error: " + e.getMessage());
-            return List.of();
         }
+        return List.of();
     }
 
     private List<Map<String, Object>> parseOverpassResponse(JsonNode data) {

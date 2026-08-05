@@ -70,6 +70,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
   const [generating, setGenerating] = useState(false);
   const [aiSucceeded, setAiSucceeded] = useState(false);
   const [aiFeedbackMsg, setAiFeedbackMsg] = useState("");
+  const [formError, setFormError] = useState("");
 
   // Helper to get realistic image thumbnail URL for itinerary places
   const getSpotImage = (item: ItineraryItem) => {
@@ -433,7 +434,21 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
   // Triggers server trip planner (invoking server-side Gemini 3.5 API)
   const handleGenerateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!destination || !durationDays || !durationHours || !budgetVal || !peopleCount) return;
+    setFormError("");
+    const missing: string[] = [];
+    if (!destination || !destination.trim()) missing.push("Destination");
+    if (!durationDays) missing.push("Duration (Days)");
+    if (!durationHours) missing.push("Active Hours / Day");
+    if (!budgetVal) missing.push("Budget");
+    if (!peopleCount) missing.push("Travelers Count");
+    if (missing.length > 0) {
+      setFormError(`Please fill the missing fields: ${missing.join(", ")}.`);
+      return;
+    }
+    if (Number(budgetVal) <= 0) {
+      setFormError("Budget must be greater than 0.");
+      return;
+    }
 
     setGenerating(true);
     setAiFeedbackMsg("");
@@ -983,6 +998,13 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                     <span className="text-[10px] font-mono font-bold text-[#F27D26] bg-white border border-[#F27D26]/20 px-2 py-1 uppercase whitespace-nowrap">
                       Click Button Below
                     </span>
+                  </div>
+                )}
+
+                {formError && (
+                  <div className="bg-[#FEF2F2] border-l-4 border-[#DC2626] p-3 text-xs text-[#991B1B] flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626] shrink-0"></span>
+                    <span><strong>Incomplete form:</strong> {formError}</span>
                   </div>
                 )}
 
