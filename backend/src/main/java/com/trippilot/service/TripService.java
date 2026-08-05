@@ -350,7 +350,7 @@ public class TripService {
         double delta = radiusKm != null ? radiusKm.doubleValue() / 111.0 : 0.1;
         String bbox = (lat - delta) + "," + (lng - delta) + "," + (lat + delta) + "," + (lng + delta);
 
-        StringBuilder query = new StringBuilder("[out:json][timeout:20];(");
+        StringBuilder query = new StringBuilder("[out:json][timeout:10];(");
         for (OverpassClause clause : clauses) {
             query.append("node[\"").append(clause.key()).append("\"~\"").append(clause.values()).append("\"](").append(bbox).append(");");
             query.append("way[\"").append(clause.key()).append("\"~\"").append(clause.values()).append("\"](").append(bbox).append(");");
@@ -370,7 +370,7 @@ public class TripService {
                     .uri(URI.create("https://overpass-api.de/api/interpreter"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(encoded))
-                    .timeout(Duration.ofSeconds(15))
+                    .timeout(Duration.ofSeconds(12))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

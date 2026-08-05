@@ -15,7 +15,7 @@ export function clearToken() {
 export async function apiRequest<T = any>(
   path: string,
   options: RequestInit = {},
-  timeoutMs: number = 30000
+  timeoutMs: number = 90000
 ): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {

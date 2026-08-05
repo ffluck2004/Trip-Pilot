@@ -995,7 +995,7 @@ export default function Dashboard({ user, onLogOut, onTripChange }: DashboardPro
                     {generating ? (
                       <>
                         <span className="w-3 h-3 rounded-none border-2 border-white/40 border-t-white animate-spin"></span>
-                        Fetching Real-World Data for {destination}...
+                        Fetching Real-World Data for {destination}... up to a minute
                       </>
                     ) : (
                       <>
