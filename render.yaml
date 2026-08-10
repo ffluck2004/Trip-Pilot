@@ -22,6 +22,8 @@ services:
           property: password
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: none
+      - key: TRIP_FAST_GENERATION
+        value: "true"
       - key: GEMINI_API_KEY
         sync: false
       - key: APP_CORS_ALLOWED_ORIGINS
