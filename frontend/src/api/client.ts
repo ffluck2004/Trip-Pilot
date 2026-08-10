@@ -1,4 +1,5 @@
-const API_BASE = 'https://trip-pilot-ogsq.onrender.com/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://trip-pilot-ogsq.onrender.com/api/v1';
+const BACKUP_API_BASE = import.meta.env.VITE_API_BACKUP_URL || 'https://trippilot-backup.onrender.com/api/v1';
 
 function getToken(): string | null {
   return localStorage.getItem('jwt_token');
@@ -28,14 +29,39 @@ export async function apiRequest<T = any>(
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers,
-      signal: controller.signal,
-    });
 
-    if (!res.ok) {
+  // Try the primary backend first; on a network failure, automatically
+  // retry against the backup backend so the site keeps working even if
+  // the primary service (or its database) is down.
+  const bases = BACKUP_API_BASE && BACKUP_API_BASE !== API_BASE
+    ? [API_BASE, BACKUP_API_BASE]
+    : [API_BASE];
+
+  let lastError: any;
+  for (const base of bases) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      let res: Response;
+      try {
+        res = await fetch(`${base}${path}`, {
+          ...options,
+          headers,
+          signal: controller.signal,
+        });
+      } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          throw new Error('Request timed out. Please try again.');
+        }
+        // Network-level failure (backend unreachable) — try the backup base.
+        lastError = err;
+        continue;
+      }
+
+      if (res.ok) {
+        return res.json();
+      }
+
       const errorBody = await res.json().catch(() => ({ message: res.statusText }));
 
       // If unauthorized or forbidden, session is stale — force re-auth
@@ -47,16 +73,12 @@ export async function apiRequest<T = any>(
         throw new Error("Session expired. Please log in again.");
       }
 
+      // The server responded — do not retry the backup; surface the error.
       throw new Error(errorBody.message || errorBody.error || `Request failed: ${res.status}`);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return res.json();
-  } catch (err: any) {
-    if (err?.name === 'AbortError') {
-      throw new Error('Request timed out. Please try again.');
-    }
-    throw err;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw lastError ?? new Error('All API endpoints are unreachable.');
 }

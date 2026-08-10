@@ -1,0 +1,17 @@
+name: Keep Backends Warm
+
+on:
+  schedule:
+    # Render free tier sleeps after ~15 min of inactivity.
+    # Ping every 10 minutes so recruiters never hit a cold start.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping primary backend
+        run: curl -sf --max-time 30 https://trip-pilot-ogsq.onrender.com/health || echo "primary ping failed (may be cold-starting)"
+      - name: Ping backup backend
+        run: curl -sf --max-time 30 https://trippilot-backup.onrender.com/health || echo "backup ping failed (may be cold-starting)"

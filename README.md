@@ -46,6 +46,14 @@ Users can register and log in with JWT-based authentication, search any destinat
 
 ---
 
+## 📸 Screenshots
+
+![TripPilot Dashboard with generated itinerary](screenshots/trip-pilot-dashboard.png)
+
+*Full-page view of the TripPilot dashboard showing a generated day-by-day itinerary with live weather, traffic telemetry, and an interactive Leaflet map.*
+
+---
+
 ## ✨ Features
 
 | Feature | Description |

@@ -9,6 +9,7 @@ import com.trippilot.exception.BadRequestException;
 import com.trippilot.exception.ResourceNotFoundException;
 import com.trippilot.repository.TripRepository;
 import com.trippilot.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -41,6 +42,15 @@ public class TripService {
     private final ConcurrentHashMap<String, CacheEntry<?>> geoCache = new ConcurrentHashMap<>();
     private static final long CACHE_TTL_MS = 5 * 60 * 1000;
     private record CacheEntry<T>(T value, long ts) { boolean isFresh() { return System.currentTimeMillis() - ts < CACHE_TTL_MS; } }
+
+    // Full-trip response cache so repeat generations return instantly (10 min TTL)
+    private final ConcurrentHashMap<String, CacheEntry<Trip>> tripCache = new ConcurrentHashMap<>();
+    private static final long TRIP_CACHE_TTL_MS = 10 * 60 * 1000;
+
+    // When true, skip external geocoding/Overpass calls and generate instantly
+    // from curated + generic interest spots (used by the backup service).
+    @Value("${TRIP_FAST_GENERATION:false}")
+    private boolean fastGeneration;
 
     public TripService(TripRepository tripRepo, UserRepository userRepo, GeminiService geminiService) {
         this.tripRepo = tripRepo;
@@ -163,19 +173,33 @@ public class TripService {
             throw new BadRequestException("Destination and duration are required.");
         }
 
+        String cacheKey = "trip:" + req.getDestination().trim().toLowerCase()
+                + ":" + (req.getInterests() != null ? req.getInterests() : "")
+                + ":" + req.getDurationInDays() + ":" + req.getDurationInHours()
+                + ":" + req.getBudget() + ":" + req.getPeopleCount()
+                + ":" + (req.getTravelStyle() != null ? req.getTravelStyle() : "")
+                + ":" + req.getTravelRadiusKm();
+        CacheEntry<Trip> cachedTrip = tripCache.get(cacheKey);
+        if (cachedTrip != null && cachedTrip.isFresh()) {
+            return cachedTrip.value();
+        }
+
         List<Map<String, Object>> itinerary = new ArrayList<>();
         boolean usedAI = false;
 
         // 1. Fetch real interest-based POIs from Overpass FIRST so selected
         //    interests always drive the itinerary (covers all destinations).
-        try {
-            Map<String, Object> geo = geocodeDestination(req.getDestination());
-            double lat = (double) geo.get("lat");
-            double lng = (double) geo.get("lng");
-            int requested = Math.max(req.getDurationInDays() * 6, 24);
-            itinerary = fetchOverpassPlacesByInterests(lat, lng, req.getTravelRadiusKm(), req.getInterests(), requested);
-        } catch (Exception e) {
-            System.err.println("Overpass failed, using fallback: " + e.getMessage());
+        //    Skipped in fast mode (backup) so trips generate instantly.
+        if (!fastGeneration) {
+            try {
+                Map<String, Object> geo = geocodeDestination(req.getDestination());
+                double lat = (double) geo.get("lat");
+                double lng = (double) geo.get("lng");
+                int requested = Math.max(req.getDurationInDays() * 6, 24);
+                itinerary = fetchOverpassPlacesByInterests(lat, lng, req.getTravelRadiusKm(), req.getInterests(), requested);
+            } catch (Exception e) {
+                System.err.println("Overpass failed, using fallback: " + e.getMessage());
+            }
         }
 
         // 2. Curated landmarks for known destinations (instant, no API calls)
@@ -269,7 +293,17 @@ public class TripService {
             trip.getItinerary().add(item);
         }
 
-        return tripRepo.save(trip);
+        // Persist when a database is reachable; if every DB is down, still return
+        // the generated trip so the website never goes dark (no downtime).
+        try {
+            Trip saved = tripRepo.save(trip);
+            tripCache.put(cacheKey, new CacheEntry<>(saved, System.currentTimeMillis()));
+            return saved;
+        } catch (Exception e) {
+            System.err.println("Trip persistence failed (database unavailable), returning unpersisted trip: " + e.getMessage());
+            tripCache.put(cacheKey, new CacheEntry<>(trip, System.currentTimeMillis()));
+            return trip;
+        }
     }
 
     private int budgetAwareSpotCount(GenerateTripRequest req) {
@@ -850,8 +884,8 @@ public class TripService {
         String cap = dest.substring(0, 1).toUpperCase() + dest.substring(1);
         String interests = req.getInterests() != null ? req.getInterests().toLowerCase() : "";
 
-        // Get real coordinates for the destination
-        Map<String, Object> geo = geocodeDestination(dest);
+        // Get real coordinates for the destination (skipped in fast mode to stay instant)
+        Map<String, Object> geo = fastGeneration ? Map.of() : geocodeDestination(dest);
         double baseLat = (double) geo.getOrDefault("lat", 19.076);
         double baseLng = (double) geo.getOrDefault("lng", 72.8777);
 

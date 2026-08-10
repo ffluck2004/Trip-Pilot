@@ -17,6 +17,7 @@ public class ItineraryItem {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Trip trip;
 
+    @Column(name = "\"day\"")
     private Integer day;
     private String timeSlot;
 
