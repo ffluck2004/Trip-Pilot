@@ -1,4 +1,10 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://trip-pilot-ogsq.onrender.com/api/v1';
+// VITE_API_BASE_URL is honored only for local development (localhost).
+// On deployed builds it is ignored so a stale/misconfigured env var
+// can never point the live site at a dead backend.
+const ENV_BASE: string | undefined = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = ENV_BASE && ENV_BASE.startsWith('http://localhost')
+  ? ENV_BASE
+  : 'https://trip-pilot-ogsq.onrender.com/api/v1';
 const BACKUP_API_BASE = import.meta.env.VITE_API_BACKUP_URL || 'https://trippilot-backup.onrender.com/api/v1';
 
 function getToken(): string | null {
